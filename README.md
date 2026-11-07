@@ -104,10 +104,6 @@ Restore nur bei gestopptem Stack: gesicherten Inhalt in ein leeres Zielvolume ha
 - Web-Tresor laedt nicht: Zertifikat, HTTPS, DOMAIN, Proxy und WebSocket-Konfiguration pruefen.
 - Registrierung blockiert: kontrollierten Bootstrap oben verwenden; anschliessend wieder sperren.
 
-## Projektseite
-
-In GitHub Settings / Pages: Deploy from a branch, main, /docs waehlen. Vorgesehene Adresse nach Aktivierung: https://jbkunama1.github.io/hAI.VaultPass/. Die Datei allein aktiviert Pages nicht. Die Seite ist Dokumentation, kein Tresor und keine Passwort-Uploadseite.
-
 ## Upstream und Lizenz
 
 Vaultwarden: https://github.com/dani-garcia/vaultwarden (AGPL-3.0). Dessen Lizenz-, Quellcode- und Weitergabeanforderungen gelten fuer die enthaltene Software; dieses Repository beansprucht keine Urheberschaft daran. Das Wrapper-Image veraendert die Anwendung nicht. Fuer Fehler am Community-Server die Vaultwarden-Kanaele verwenden, nicht den offiziellen Bitwarden-Support.
