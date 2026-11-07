@@ -2,6 +2,8 @@ services:
   vaultpass:
     image: ghcr.io/jbkunama1/hai.vaultpass:${IMAGE_TAG:-latest}
     restart: unless-stopped
+    ports:
+      - '8888:80'
     environment:
       DOMAIN: ${VAULTPASS_DOMAIN:?Set VAULTPASS_DOMAIN to your HTTPS URL}
       TZ: ${TZ:-Europe/Berlin}
