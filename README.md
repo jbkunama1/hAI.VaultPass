@@ -20,7 +20,7 @@ Selfhosting-Paket fuer [Vaultwarden](https://github.com/dani-garcia/vaultwarden)
 | --- | --- |
 | Dockerfile | Duennes Wrapper-Image auf vaultwarden/server:latest; kein Quellcode-Neubau |
 | .github/workflows/build.yml | Build und Push nach GHCR |
-| portainer-stack.yml | Portainer-Deployment ohne lokalen Build |
+| docker-compose.yml | Portainer-Deployment ohne lokalen Build |
 | .env.example | Beispielwerte fuer Portainer |
 | docs/index.html | Statische Projektseite fuer GitHub Pages |
 
@@ -29,14 +29,14 @@ Selfhosting-Paket fuer [Vaultwarden](https://github.com/dani-garcia/vaultwarden)
 1. Erfolgreichen Actions-Build abwarten. Der Commit allein bestaetigt keinen erfolgreichen Build.
 2. GHCR-Package auf Public setzen oder in Portainer GHCR-Zugang mit read:packages hinterlegen. Ein oeffentliches Repo bedeutet nicht automatisch ein oeffentliches Package.
 3. Vorhandenes externes Docker-Netzwerk highfishNetwork sicherstellen.
-4. Stack aus Repository https://github.com/jbkunama1/hAI.VaultPass anlegen: Referenz refs/heads/main, Compose-Pfad portainer-stack.yml.
+4. Stack aus Repository https://github.com/jbkunama1/hAI.VaultPass anlegen: Referenz refs/heads/main, Compose-Pfad docker-compose.yml. Bei bestehenden Repository-Stacks den bisherigen Compose-Pfad auf docker-compose.yml umstellen.
 5. VAULTPASS_DOMAIN auf die vollstaendige HTTPS-Adresse setzen, z.B. https://vault.example.com. Keine echten Secrets in GitHub hinterlegen.
-6. Bestehenden Reverse Proxy an highfishNetwork anschliessen und fuer die gewaehlte Domain auf http://hai-vaultpass:80 weiterleiten. WebSocket-Upgrades unterstuetzen; HTTPS mit gueltigem Zertifikat bereitstellen. Der Stack veroeffentlicht absichtlich keinen Host-Port. Ein ausserhalb dieses Docker-Netzwerks laufender Proxy erreicht diesen Namen nicht direkt.
+6. Bestehenden Reverse Proxy an highfishNetwork anschliessen und fuer die gewaehlte Domain auf http://hai-vaultpass:80 weiterleiten. WebSocket-Upgrades unterstuetzen; HTTPS mit gueltigem Zertifikat bereitstellen. Der Stack veroeffentlicht Host-Port 8888 auf Container-Port 80 (8888:80). Ein ausserhalb dieses Docker-Netzwerks laufender Proxy kann stattdessen http://SERVER-IP:8888 als Upstream verwenden, sofern dieser erreichbar ist. Port 8888 liefert HTTP, nicht HTTPS; fuer den Web-Tresor weiterhin die HTTPS-Domain verwenden. Das Mapping bindet standardmaessig an alle Host-Interfaces: Zugriff auf Port 8888 auf vertrauenswuerdige Netze bzw. den Proxy beschraenken, keine Router-Portfreigabe einrichten.
 7. Stack deployen und die HTTPS-Adresse oeffnen. Der Web-Tresor benoetigt HTTPS fuer die Web-Crypto-API; blosses HTTP ueber eine LAN-IP reicht nicht.
 
 ### Erstes Konto
 
-Standardmaessig sind Registrierungen und Einladungen deaktiviert. Fuer das erste Konto: Zugang zunaechst am Proxy auf dein vertrauenswuerdiges Geraet beschraenken, SIGNUPS_ALLOWED=true setzen und neu deployen. Konto anlegen, danach sofort SIGNUPS_ALLOWED=false setzen und erneut deployen. Ohne Zugriffsbeschraenkung koennten waehrenddessen andere Personen Konten registrieren.
+Standardmaessig sind Registrierungen und Einladungen deaktiviert. Fuer das erste Konto: Zugang zunaechst am Proxy auf dein vertrauenswuerdiges Geraet beschraenken, SIGNUPS_ALLOWED=true setzen und neu deployen. Konto anlegen, danach sofort SIGNUPS_ALLOWED=false setzen und erneut deployen. Ohne Zugriffsbeschraenkung koennten waehrenddessen andere Personen Konten registrieren. Auch den direkten Zugriff auf Host-Port 8888 waehrenddessen einschraenken, damit die Proxy-Beschraenkung nicht umgangen werden kann.
 
 ADMIN_TOKEN ist optional und leer bedeutet: Admin-Oberflaeche deaktiviert. Fuer die Administration lokal mit dem Upstream-Befehl docker run --rm -it vaultwarden/server:latest /vaultwarden hash einen Argon2-Hash erzeugen und als Portainer-Umgebungsvariable ADMIN_TOKEN eintragen. Das zugehoerige Passwort sicher verwahren. Bei direkter Eintragung eines Hashs in Compose muessen Dollarzeichen als $$ maskiert werden; bei Portainer-Variablen den unveraenderten Wert verwenden. /admin nur eingeschraenkt erreichbar machen. Einstellungen aus der Admin-Oberflaeche werden in /data/config.json gespeichert und koennen Umgebungsvariablen uebersteuern.
 
@@ -52,7 +52,7 @@ ADMIN_TOKEN ist optional und leer bedeutet: Admin-Oberflaeche deaktiviert. Fuer 
 | ADMIN_TOKEN | leer | Admin deaktiviert; optional Argon2-Hash |
 | SHOW_PASSWORD_HINT | false | Keine Passwort-Hinweise anzeigen |
 
-Volume: hai-vaultpass-data, im Container /data. Netzwerk: highfishNetwork. SMTP ist in diesem Minimalstack nicht konfiguriert; nicht auf E-Mail-Zustellung oder E-Mail-Wiederherstellung verlassen. Master-Passwort und 2FA-Wiederherstellungscode offline sicher verwahren.
+Port-Mapping: 8888:80 (Host:Container), fest in docker-compose.yml. Volume: hai-vaultpass-data, im Container /data. Netzwerk: highfishNetwork. SMTP ist in diesem Minimalstack nicht konfiguriert; nicht auf E-Mail-Zustellung oder E-Mail-Wiederherstellung verlassen. Master-Passwort und 2FA-Wiederherstellungscode offline sicher verwahren.
 
 ## Google und NordPass importieren
 
@@ -95,10 +95,12 @@ Restore nur bei gestopptem Stack: gesicherten Inhalt in ein leeres Zielvolume ha
 
 - highfishNetwork ist ein gemeinsames Netzwerk, keine Isolation zwischen seinen Containern. Nur vertrauenswuerdige Dienste anschliessen.
 - Keine Docker-Socket-Mounts und kein privileged-Modus. Reverse Proxy, Host und Vaultwarden aktuell halten.
-- /admin am Proxy gesondert einschraenken; keine oeffentliche Dokumentationsseite mit Passwortdateien mischen.
+- /admin am Proxy gesondert einschraenken; keine oeffentliche Dokumentationsseite mit Passwortdateien mischen. Direkten Zugriff ueber Host-Port 8888 ebenfalls beschraenken.
 - Unhealthy: Logs und Upstream-Healthcheck pruefen. restart: unless-stopped startet einen nur ungesunden Container nicht automatisch neu.
 - Image nicht gefunden: Buildstatus, Package-Sichtbarkeit und Registry-Login pruefen.
 - Netzwerk fehlt: highfishNetwork auf dem gewaehlten Docker-Host anlegen.
+- Port belegt: sicherstellen, dass Host-Port 8888 frei ist.
+- Compose-Datei nicht gefunden: in Portainer docker-compose.yml als Compose-Pfad verwenden.
 - Web-Tresor laedt nicht: Zertifikat, HTTPS, DOMAIN, Proxy und WebSocket-Konfiguration pruefen.
 - Registrierung blockiert: kontrollierten Bootstrap oben verwenden; anschliessend wieder sperren.
 
