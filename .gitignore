@@ -1,0 +1,11 @@
+.env
+.env.*
+!.env.example
+*.csv
+*.sqlite*
+*.db
+*.pem
+*.key
+backups/
+vw-data/
+data/
