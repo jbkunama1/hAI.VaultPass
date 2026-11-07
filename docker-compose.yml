@@ -14,7 +14,7 @@ services:
     volumes:
       - vaultpass-data:/data
     networks:
-      highfishNetwork:
+      highfishnetwork:
         aliases:
           - hai-vaultpass
     logging:
@@ -26,6 +26,6 @@ volumes:
   vaultpass-data:
     name: hai-vaultpass-data
 networks:
-  highfishNetwork:
+  highfishnetwork:
     external: true
-    name: highfishNetwork
+    name: highfishnetwork
