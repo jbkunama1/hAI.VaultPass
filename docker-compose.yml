@@ -1,0 +1,31 @@
+services:
+  vaultpass:
+    image: ghcr.io/jbkunama1/hai.vaultpass:${IMAGE_TAG:-latest}
+    restart: unless-stopped
+    ports:
+      - '8888:80'
+    environment:
+      DOMAIN: ${VAULTPASS_DOMAIN:?Set VAULTPASS_DOMAIN to your HTTPS URL}
+      TZ: ${TZ:-Europe/Berlin}
+      SIGNUPS_ALLOWED: ${SIGNUPS_ALLOWED:-false}
+      INVITATIONS_ALLOWED: ${INVITATIONS_ALLOWED:-false}
+      ADMIN_TOKEN: ${ADMIN_TOKEN:-}
+      SHOW_PASSWORD_HINT: ${SHOW_PASSWORD_HINT:-false}
+    volumes:
+      - vaultpass-data:/data
+    networks:
+      highfishNetwork:
+        aliases:
+          - hai-vaultpass
+    logging:
+      driver: json-file
+      options:
+        max-size: '10m'
+        max-file: '3'
+volumes:
+  vaultpass-data:
+    name: hai-vaultpass-data
+networks:
+  highfishNetwork:
+    external: true
+    name: highfishNetwork
